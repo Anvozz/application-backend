@@ -1,0 +1,101 @@
+services:
+  application-api:
+    build:
+      context: .
+      dockerfile: ./apps/application-backend/Dockerfile
+      target: development
+    command: yarn start:dev application-backend
+    env_file:
+      - ./apps/application-backend/.env
+    depends_on:
+      - user-service
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - '3000:3000'
+
+  user-service:
+    build:
+      context: .
+      dockerfile: ./apps/user/Dockerfile
+      target: development
+    command: yarn start:dev user
+    env_file:
+      - ./apps/user/.env
+    depends_on:
+      # - mongodb-primary
+      # - mongodb-secondary
+      # - mongodb-arbiter
+      - user-database
+      # - billing
+      # - auth
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - '5672:5672'
+
+  mongodb-primary:
+    image: docker.io/bitnami/mongodb:6.0
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-primary
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_ROOT_PASSWORD=password123
+      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+    volumes:
+      - 'mongodb_master_data:/bitnami/mongodb'
+    ports:
+      - '27017:27017'
+
+  mongodb-secondary:
+    image: docker.io/bitnami/mongodb:6.0
+    depends_on:
+      - mongodb-primary
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-secondary
+      - MONGODB_REPLICA_SET_MODE=secondary
+      - MONGODB_INITIAL_PRIMARY_HOST=mongodb-primary
+      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=password123
+      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+
+  mongodb-arbiter:
+    image: docker.io/bitnami/mongodb:6.0
+    depends_on:
+      - mongodb-primary
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-arbiter
+      - MONGODB_REPLICA_SET_MODE=arbiter
+      - MONGODB_INITIAL_PRIMARY_HOST=mongodb-primary
+      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=password123
+      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+
+  user-database:
+    container_name: pg_user_database
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: xVz99!axzLoz
+      POSTGRES_DB: test_db
+    ports:
+      - '5432:5432'
+
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: sankaapb@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: 1234567890
+    ports:
+      - '5050:80'
+
+volumes:
+  mongodb_master_data:
+    driver: local
