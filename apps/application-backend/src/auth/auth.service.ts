@@ -13,6 +13,7 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
+import * as _ from 'lodash';
 
 export interface TokenPayload {
   userId: number;
@@ -67,10 +68,13 @@ export class AuthService {
     if (!passwordIsValid) {
       throw new UnauthorizedException('Credentials are not valid.');
     }
-    return user;
+    return _.omit(user, ['password']);
   }
 
   async getUser(getUserArgs: Partial<User>) {
-    return this.userClient.send('get_user', getUserArgs);
+    const user: User = await lastValueFrom(
+      this.userClient.send('get_user', getUserArgs),
+    );
+    return _.omit(user, ['password']);
   }
 }
