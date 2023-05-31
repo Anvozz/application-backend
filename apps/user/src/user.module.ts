@@ -38,6 +38,7 @@ import { RmqModule } from '@app/common';
       inject: [ConfigService],
     }),
     RmqModule,
+    TypeOrmModule.forFeature([User]),
   ],
   controllers: [UserController],
   providers: [UserService],

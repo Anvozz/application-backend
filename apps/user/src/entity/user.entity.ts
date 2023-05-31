@@ -1,20 +1,21 @@
 import {
   Column,
-  PrimaryColumn,
   Entity,
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Address } from './address.entity';
 
 @Entity()
 export class User {
-  @PrimaryColumn()
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
   email: string;
+
   @Column()
   tel: string;
 
@@ -29,6 +30,9 @@ export class User {
 
   @Column()
   lastname: string;
+
+  @Column({ default: null })
+  dob?: Date;
 
   @Column({ default: false })
   isActive: boolean;
